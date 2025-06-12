@@ -1,0 +1,15 @@
+# Compiler files
+.cache/
+broadcast/
+cache/
+out/
+zkout/
+
+# Dotenv files
+.env
+
+# Web3 files
+node_modules/
+
+# Other files
+.DS_Store

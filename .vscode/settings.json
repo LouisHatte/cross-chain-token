@@ -1,0 +1,12 @@
+{
+  "solidity.remappings": [
+    "@chainlink_/=lib/chainlink/contracts/src/v0.8/",
+    "@chainlink-local/=lib/chainlink-local/",
+    "@forge-std/=lib/forge-std/src/",
+    "@openzeppelin/=lib/openzeppelin-contracts/contracts/"
+  ],
+  "solidity.compileUsingRemoteVersion": "v0.8.30+commit.73712a0",
+  "solidity.packageDefaultDependenciesDirectory": "lib",
+  "solidity.packageDefaultDependenciesContractsDirectory": "",
+  "solidity.monoRepoSupport": false
+}
