@@ -34,7 +34,7 @@ pragma solidity ^0.8.30;
 
 //     function setUp() external {
 //         srcForkId = vm.createSelectFork(vm.envString("ARBITRUM_SEPOLIA_RPC_URL"));
-//         destForkId = vm.createFork(vm.envString("ETHEREUM_SEPOLIA_RPC_URL"));
+//         destForkId = vm.createFork(vm.envString("ETH_SEPOLIA_RPC_URL"));
 
 //         ccipLocalSimulatorFork = new CCIPLocalSimulatorFork();
 //         vm.makePersistent(address(ccipLocalSimulatorFork));

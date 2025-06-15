@@ -4,16 +4,14 @@ pragma solidity ^0.8.30;
 import {Test} from "@forge-std/Test.sol";
 
 import {TokenDeployer} from "script/Deployer.s.sol";
-import {HelperConfig} from "script/HelperConfig.sol";
 import {SnailToken} from "src/SnailToken.sol";
 
 contract SnailTokenTest is Test {
     TokenDeployer deployer;
-    HelperConfig helperConfig;
     SnailToken token;
 
+    address admin = makeAddr("admin");
     address arina = makeAddr("arina");
-    address admin;
 
     modifier mint(address to, uint256 amount) {
         vm.prank(admin);
@@ -23,8 +21,7 @@ contract SnailTokenTest is Test {
 
     function setUp() external {
         deployer = new TokenDeployer();
-        (token, helperConfig) = deployer.run();
-        admin = helperConfig.getConfig().admin;
+        token = deployer.deployToken(admin);
     }
 
     /* --------------- Constructor --------------- */
@@ -103,7 +100,7 @@ contract SnailTokenTest is Test {
 
     /* --------------- Getters --------------- */
     function testGetCCIPAdmin() external view {
-        assertEq(token.getCCIPAdmin(), helperConfig.getConfig().admin);
+        assertEq(token.getCCIPAdmin(), admin);
     }
 
     function testGetMinterRole() external view {

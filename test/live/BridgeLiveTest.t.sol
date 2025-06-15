@@ -21,16 +21,17 @@ import {
 import {AccessControl} from "@chainlink_/vendor/openzeppelin-solidity/v4.8.3/contracts/access/AccessControl.sol";
 
 import {TokenAndPoolDeployer} from "script/Deployer.s.sol";
+import {TokenAndPoolHelper} from "script/Helper.s.sol";
 import {PoolConfigurator} from "script/PoolConfigurator.s.sol";
 import {SnailToken} from "src/SnailToken.sol";
 
-contract BridgeTest is Test {
+contract BridgeLiveTest is Test {
     uint256 ethSepoliaFork;
     uint256 baseSepoliaFork;
 
     CCIPLocalSimulatorFork ccipLocalSimulatorFork;
 
-    TokenAndPoolDeployer tokenAndPoolDeployer;
+    TokenAndPoolHelper helper;
     PoolConfigurator poolConfigurator;
 
     SnailToken tokenEthSepolia;
@@ -42,7 +43,7 @@ contract BridgeTest is Test {
     Register.NetworkDetails networkDetailsEthSepolia;
     Register.NetworkDetails networkDetailsBaseSepolia;
 
-    address admin = makeAddr("admin");
+    address admin = vm.envAddress("FRODO_PUBLIC_KEY");
     address arina = makeAddr("arina");
 
     function setUp() external {
@@ -52,52 +53,54 @@ contract BridgeTest is Test {
         baseSepoliaFork = vm.createFork(BASE_SEPOLIA_RPC_URL);
 
         ccipLocalSimulatorFork = new CCIPLocalSimulatorFork();
-        tokenAndPoolDeployer = new TokenAndPoolDeployer();
         poolConfigurator = new PoolConfigurator();
+        helper = new TokenAndPoolHelper();
         vm.makePersistent(address(ccipLocalSimulatorFork));
-        vm.makePersistent(address(tokenAndPoolDeployer));
         vm.makePersistent(address(poolConfigurator));
-
-        // Deploy token and pool on Ethereum Sepolia
-        vm.selectFork(ethSepoliaFork);
-        networkDetailsEthSepolia = ccipLocalSimulatorFork.getNetworkDetails(block.chainid);
-        (tokenEthSepolia, poolEthSepolia) = tokenAndPoolDeployer.deployTokenAndPool(admin);
-
-        // Deploy token and pool on Base Sepolia
-        vm.selectFork(baseSepoliaFork);
-        networkDetailsBaseSepolia = ccipLocalSimulatorFork.getNetworkDetails(block.chainid);
-        (tokenBaseSepolia, poolBaseSepolia) = tokenAndPoolDeployer.deployTokenAndPool(admin);
+        vm.makePersistent(address(helper));
 
         // Configure pools on Ethereum Sepolia
         vm.selectFork(ethSepoliaFork);
+        TokenAndPoolHelper.Config memory configEthSepolia = helper.getConfig();
+
+        tokenEthSepolia = SnailToken(configEthSepolia.localToken);
+        poolEthSepolia = BurnMintTokenPool(configEthSepolia.localPool);
+        networkDetailsEthSepolia = configEthSepolia.localNetworkDetails;
+
         poolConfigurator.configurePool({
             owner: admin,
-            localPool: address(poolEthSepolia),
-            remoteChainSelector: networkDetailsBaseSepolia.chainSelector,
-            remotePool: address(poolBaseSepolia),
-            remoteToken: address(tokenBaseSepolia),
-            outboundRateLimiterIsEnabled: true,
-            outboundRateLimiterCapacity: 100_000,
-            outboundRateLimiterRate: 167,
-            inboundRateLimiterIsEnabled: true,
-            inboundRateLimiterCapacity: 100_000,
-            inboundRateLimiterRate: 167
+            localPool: configEthSepolia.localPool,
+            remoteChainSelector: configEthSepolia.remoteChainSelector,
+            remotePool: configEthSepolia.remotePool,
+            remoteToken: configEthSepolia.remoteToken,
+            outboundRateLimiterIsEnabled: configEthSepolia.outboundRateLimiterIsEnabled,
+            outboundRateLimiterCapacity: configEthSepolia.outboundRateLimiterCapacity,
+            outboundRateLimiterRate: configEthSepolia.outboundRateLimiterRate,
+            inboundRateLimiterIsEnabled: configEthSepolia.inboundRateLimiterIsEnabled,
+            inboundRateLimiterCapacity: configEthSepolia.inboundRateLimiterCapacity,
+            inboundRateLimiterRate: configEthSepolia.inboundRateLimiterRate
         });
 
         // Configure pools on Base Sepolia
         vm.selectFork(baseSepoliaFork);
+        TokenAndPoolHelper.Config memory configBaseSepolia = helper.getConfig();
+
+        tokenBaseSepolia = SnailToken(configBaseSepolia.localToken);
+        poolBaseSepolia = BurnMintTokenPool(configBaseSepolia.localPool);
+        networkDetailsBaseSepolia = configBaseSepolia.localNetworkDetails;
+
         poolConfigurator.configurePool({
             owner: admin,
-            localPool: address(poolBaseSepolia),
-            remoteChainSelector: networkDetailsEthSepolia.chainSelector,
-            remotePool: address(poolEthSepolia),
-            remoteToken: address(tokenEthSepolia),
-            outboundRateLimiterIsEnabled: true,
-            outboundRateLimiterCapacity: 100_000,
-            outboundRateLimiterRate: 167,
-            inboundRateLimiterIsEnabled: true,
-            inboundRateLimiterCapacity: 100_000,
-            inboundRateLimiterRate: 167
+            localPool: configBaseSepolia.localPool,
+            remoteChainSelector: configBaseSepolia.remoteChainSelector,
+            remotePool: configBaseSepolia.remotePool,
+            remoteToken: configBaseSepolia.remoteToken,
+            outboundRateLimiterIsEnabled: configBaseSepolia.outboundRateLimiterIsEnabled,
+            outboundRateLimiterCapacity: configBaseSepolia.outboundRateLimiterCapacity,
+            outboundRateLimiterRate: configBaseSepolia.outboundRateLimiterRate,
+            inboundRateLimiterIsEnabled: configBaseSepolia.inboundRateLimiterIsEnabled,
+            inboundRateLimiterCapacity: configBaseSepolia.inboundRateLimiterCapacity,
+            inboundRateLimiterRate: configBaseSepolia.inboundRateLimiterRate
         });
     }
 

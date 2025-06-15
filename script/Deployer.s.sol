@@ -8,18 +8,18 @@ import {IBurnMintERC20} from "@chainlink_/shared/token/ERC20/IBurnMintERC20.sol"
 import {RegistryModuleOwnerCustom} from "@chainlink_/ccip/tokenAdminRegistry/RegistryModuleOwnerCustom.sol";
 import {TokenAdminRegistry} from "@chainlink_/ccip/tokenAdminRegistry/TokenAdminRegistry.sol";
 
-import {HelperConfig} from "script/HelperConfig.sol";
 import {SnailToken} from "src/SnailToken.sol";
 
 contract TokenAndPoolDeployer is Script {
-    function run()
-        external
-        returns (SnailToken token, BurnMintTokenPool pool, Register.NetworkDetails memory networkDetails)
-    {
-        CCIPLocalSimulatorFork ccipLocalSimulatorFork = new CCIPLocalSimulatorFork();
-        networkDetails = ccipLocalSimulatorFork.getNetworkDetails(block.chainid);
+    function run() external {
+        deployTokenAndPool(msg.sender);
+    }
 
-        vm.startBroadcast();
+    function deployTokenAndPool(address owner) public returns (SnailToken token, BurnMintTokenPool pool) {
+        CCIPLocalSimulatorFork ccipLocalSimulatorFork = new CCIPLocalSimulatorFork();
+        Register.NetworkDetails memory networkDetails = ccipLocalSimulatorFork.getNetworkDetails(block.chainid);
+
+        vm.startBroadcast(owner);
         token = new SnailToken();
         pool = new BurnMintTokenPool(
             IBurnMintERC20(address(token)),
@@ -38,11 +38,12 @@ contract TokenAndPoolDeployer is Script {
 }
 
 contract TokenDeployer is Script {
-    function run() external returns (SnailToken token, HelperConfig helperConfig) {
-        helperConfig = new HelperConfig();
-        address admin = helperConfig.getConfig().admin;
+    function run() external {
+        deployToken(msg.sender);
+    }
 
-        vm.startBroadcast(admin);
+    function deployToken(address owner) public returns (SnailToken token) {
+        vm.startBroadcast(owner);
         token = new SnailToken();
         vm.stopBroadcast();
     }
