@@ -3,9 +3,6 @@ pragma solidity ^0.8.30;
 
 import {Script} from "@forge-std/Script.sol";
 import {CCIPLocalSimulatorFork, Register} from "@chainlink-local/src/ccip/CCIPLocalSimulatorFork.sol";
-import {BurnMintTokenPool} from "@chainlink_/ccip/pools/BurnMintTokenPool.sol";
-
-import {SnailToken} from "src/SnailToken.sol";
 
 library Chains {
     uint256 internal constant ETH_SEPOLIA = 11155111;

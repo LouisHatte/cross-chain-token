@@ -2,7 +2,7 @@ import React from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount } from "wagmi";
 
-import Bridge from "./Bridge";
+import Bridge from "@/Bridge";
 
 const App: React.FC = () => {
   const { isConnected } = useAccount();

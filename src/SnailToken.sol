@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {ERC20, ERC20Burnable, IERC20} from "@openzeppelin/token/ERC20/extensions/ERC20Burnable.sol";
+import {ERC20, ERC20Burnable} from "@openzeppelin/token/ERC20/extensions/ERC20Burnable.sol";
 import {AccessControl} from "@openzeppelin/access/AccessControl.sol";
 import {Ownable} from "@openzeppelin/access/Ownable.sol";
 

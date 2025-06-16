@@ -1,50 +1,38 @@
-import React from "react";
-import { useAccount, useReadContract } from "wagmi";
-import type { Abi } from "viem";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useAccount, usePublicClient, useWalletClient } from "wagmi";
+import { sepolia } from "wagmi/chains";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { formatEther, type Address } from "viem";
+import { waitForTransactionReceipt } from "viem/actions";
 
-import snailTokenAbi from "./abi/snail-token.json";
-
-type Contracts = {
-  snailToken: `0x${string}`;
-  snailTokenPool: `0x${string}`;
-};
-
-const CONTRACTS_BY_CHAIN: Record<number, Contracts> = {
-  11155111: {
-    snailToken: import.meta.env.VITE_SNAIL_TOKEN_CONTRACT_ETH_SEPOLIA,
-    snailTokenPool: import.meta.env.VITE_SNAIL_TOKEN_POOL_CONTRACT_ETH_SEPOLIA,
-  },
-  84532: {
-    snailToken: import.meta.env.VITE_SNAIL_TOKEN_CONTRACT_BASE_SEPOLIA,
-    snailTokenPool: import.meta.env.VITE_SNAIL_TOKEN_POOL_CONTRACT_BASE_SEPOLIA,
-  },
-};
+import { useTokenBalance, getAllowance, getCCIPFee } from "@/interactions/read";
+import { approve, useBridge } from "@/interactions/write";
+import { buildMessage } from "@/utils/ccip";
+import { CONTRACTS } from "@/constants/web3";
 
 const Bridge: React.FC = () => {
-  const { address, chainId } = useAccount();
+  const publicClient = usePublicClient();
+  const { data: walletClient } = useWalletClient();
 
-  const {
-    data: balance,
-    isLoading,
-    error,
-  } = useReadContract({
-    abi: snailTokenAbi.abi as Abi,
-    address: CONTRACTS_BY_CHAIN[chainId!].snailToken,
-    functionName: "balanceOf",
-    args: [address],
-  }) as { data: number | undefined; isLoading: boolean; error: Error | null };
+  const { address: a, chainId: c } = useAccount();
+  const address = a as Address;
+  const chainId = c as number;
 
-  const from = chainId === 11155111 ? "Sepolia" : "Base Sepolia";
-  const to = chainId === 11155111 ? "Base Sepolia" : "Sepolia";
+  const [isBridging, setIsBridging] = useState(false);
+
+  const { data: balance } = useTokenBalance(chainId, address);
+  const { bridge, hash: bridgeHash } = useBridge();
+
+  const from = chainId === sepolia.id ? "Sepolia" : "Base Sepolia";
+  const to = chainId === sepolia.id ? "Base Sepolia" : "Sepolia";
 
   const schema = z.object({
     amount: z
-      .number({ invalid_type_error: "Must be a number" })
-      .min(1, "Must be at least 1")
-      .max(balance ?? 0, `Must be at most ${balance}`),
+      .number()
+      .min(1, "Must be at least 1 wei")
+      .max(100_000, "Must be at most 100,000 wei"),
   });
   type FormData = z.infer<typeof schema>;
 
@@ -56,8 +44,44 @@ const Bridge: React.FC = () => {
     resolver: zodResolver(schema),
   });
 
-  function bridge(data: FormData) {
-    console.log("data", data);
+  async function handleBridge(data: FormData) {
+    if (!publicClient || !walletClient) return;
+
+    try {
+      setIsBridging(true);
+
+      const amountInWei = BigInt(data.amount);
+
+      const allowance = await getAllowance(publicClient, chainId, address);
+      if (allowance < amountInWei) {
+        const approveHash = await approve(
+          walletClient,
+          chainId,
+          CONTRACTS[chainId].snailToken,
+          amountInWei,
+        );
+        await waitForTransactionReceipt(publicClient, {
+          hash: approveHash,
+        });
+      }
+
+      const message = buildMessage(chainId, address, amountInWei);
+      const ccipFee = await getCCIPFee(publicClient, chainId, message);
+
+      await approve(
+        walletClient,
+        chainId,
+        CONTRACTS[chainId].linkToken,
+        ccipFee,
+      );
+
+      await bridge(chainId, message);
+
+      setIsBridging(false);
+    } catch (err) {
+      console.error("error: ", err);
+      setIsBridging(false);
+    }
   }
 
   return (
@@ -67,7 +91,7 @@ const Bridge: React.FC = () => {
       </h1>
 
       <form
-        onSubmit={handleSubmit(bridge)}
+        onSubmit={handleSubmit(handleBridge)}
         className="mb-6 flex flex-col gap-2"
       >
         <div className="min-h-[24px] text-red-600">
@@ -78,12 +102,13 @@ const Bridge: React.FC = () => {
             type="text"
             autoFocus
             {...register("amount", { valueAsNumber: true })}
-            placeholder="Amount to bridge"
+            placeholder="Amount in wei"
             className="rounded-lg border border-white bg-black p-3 text-xl placeholder-gray-400 focus:ring-0 focus:outline-none"
           />
           <button
             type="submit"
-            className="cursor-pointer rounded-xl border border-white bg-white p-3 text-xl font-semibold text-black"
+            disabled={isBridging}
+            className="cursor-pointer rounded-xl border border-white bg-white p-3 text-xl font-semibold text-black disabled:cursor-not-allowed disabled:bg-gray-300"
           >
             Bridge
           </button>
@@ -91,10 +116,10 @@ const Bridge: React.FC = () => {
       </form>
 
       <div className="text-center">
-        {!isLoading && !error
-          ? `Current balance: ${balance} SNAIL`
-          : "Current balance: loading..."}
-        {error && <div>error: {error.toString()}</div>}
+        Current balance: {balance ? formatEther(balance) : 0} SNAIL
+        <div className="mt-4 text-sm text-gray-400">
+          {bridgeHash && <div>Bridge tx: {bridgeHash}</div>}
+        </div>
       </div>
     </div>
   );

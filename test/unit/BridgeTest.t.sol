@@ -1,24 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {Test, Vm} from "@forge-std/Test.sol";
-
-import {BurnMintTokenPool, TokenPool} from "@chainlink_/ccip/pools/BurnMintTokenPool.sol";
-import {IBurnMintERC20} from "@chainlink_/shared/token/ERC20/IBurnMintERC20.sol";
-import {RegistryModuleOwnerCustom} from "@chainlink_/ccip/tokenAdminRegistry/RegistryModuleOwnerCustom.sol";
-import {TokenAdminRegistry} from "@chainlink_/ccip/tokenAdminRegistry/TokenAdminRegistry.sol";
-import {RateLimiter} from "@chainlink_/ccip/libraries/RateLimiter.sol";
+import {Test} from "@forge-std/Test.sol";
+import {CCIPLocalSimulatorFork, Register} from "@chainlink-local/src/ccip/CCIPLocalSimulatorFork.sol";
+import {BurnMintTokenPool} from "@chainlink_/ccip/pools/BurnMintTokenPool.sol";
 import {IRouterClient} from "@chainlink_/ccip/interfaces/IRouterClient.sol";
 import {Client} from "@chainlink_/ccip/libraries/Client.sol";
-
-import {CCIPLocalSimulatorFork, Register} from "@chainlink-local/src/ccip/CCIPLocalSimulatorFork.sol";
-
-import {
-    ERC20,
-    ERC20Burnable,
-    IERC20
-} from "@chainlink_/vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/extensions/ERC20Burnable.sol";
-import {AccessControl} from "@chainlink_/vendor/openzeppelin-solidity/v4.8.3/contracts/access/AccessControl.sol";
+import {IERC20} from "@chainlink_/vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/IERC20.sol";
 
 import {TokenAndPoolDeployer} from "script/Deployer.s.sol";
 import {PoolConfigurator} from "script/PoolConfigurator.s.sol";

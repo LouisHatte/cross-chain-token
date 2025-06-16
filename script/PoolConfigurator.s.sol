@@ -2,13 +2,10 @@
 pragma solidity ^0.8.30;
 
 import {Script} from "@forge-std/Script.sol";
-import {Register} from "@chainlink-local/src/ccip/CCIPLocalSimulatorFork.sol";
 import {TokenPool} from "@chainlink_/ccip/pools/TokenPool.sol";
 import {RateLimiter} from "@chainlink_/ccip/libraries/RateLimiter.sol";
-import {BurnMintTokenPool} from "@chainlink_/ccip/pools/BurnMintTokenPool.sol";
 
 import {TokenAndPoolHelper} from "script/Helper.s.sol";
-import {SnailToken} from "src/SnailToken.sol";
 
 contract PoolConfigurator is Script {
     function run() external {

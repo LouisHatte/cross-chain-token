@@ -4,18 +4,20 @@ import ReactDOM from "react-dom/client";
 import "./index.css";
 import "@rainbow-me/rainbowkit/styles.css";
 
-import { getDefaultConfig, RainbowKitProvider } from "@rainbow-me/rainbowkit";
-import { WagmiProvider } from "wagmi";
+import { RainbowKitProvider } from "@rainbow-me/rainbowkit";
+import { WagmiProvider, createConfig, http } from "wagmi";
 import { sepolia, baseSepolia } from "wagmi/chains";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 
-import App from "./App";
+import App from "@/App";
+import { RPC_URLS } from "@/constants/web3";
 
-const config = getDefaultConfig({
-  appName: "My Cross-Chain Dapp",
-  projectId: "123",
+export const config = createConfig({
   chains: [sepolia, baseSepolia],
-  ssr: true,
+  transports: {
+    [sepolia.id]: http(RPC_URLS.sepolia),
+    [baseSepolia.id]: http(RPC_URLS.baseSepolia),
+  },
 });
 
 const queryClient = new QueryClient();
